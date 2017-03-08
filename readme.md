@@ -1,3 +1,39 @@
+## ilog
+自用输出日志的库，使用C语言编写
+跨平台，支持Windows,Linux,Mac
+
+### 简单用法
+* 直接使用相关宏就可以输入日志到stdout
+* 也可以使用**ilogSetStyle**函数自定义输出格式
+* 自定义输出介质(stdout,文件，syslog,或者写个回调函数输出到自定义位置
+* 支持同时输出到多个位置，只需要使用**ilogCreate**函数创建个对象然后调用**ilogAddLog**添加这个对象，就能同时输出到多个位置
+* 详细的说明都在*ilog.h*中
+* TODO: 日志按大小或者时间备份
+
+### 例子
+```c
+#include <stdio.h>
+#include "ilog.h"
+
+static void ilog_init()
+{
+    ilogInit();
+    // 依次输出文件名，所在行数，所在函数的名字，日志内容
+    // 格式化字符串类似于printf，在后面会有详细的说明
+    ilogSetStyleFormat(NULL, "%S:%L:%F\n%f");
+}
+
+int main()
+{
+    char buf[31] = "\r\n中文字符串测试...";
+    ilog_init();	// 甚至可以不用调用,默认会输出到stdout
+    logDebug("this is a %s message", ilogLevelToString((LogLevel)1));
+    hexLogInfo(buf, sizeof(buf), "this is a %s message for hexlog", ilogLevelToString((LogLevel)2));
+    ilogCleanup();
+    return 0;
+}
+```
+
 ### ilog输出流程  
 日志句柄集合->日志句柄->输出。
 
@@ -9,7 +45,7 @@
 	* notice 	(重要的信息)
 	* warning	(警告信息)
 	* error		(错误信息)
-        * fatal		(致命错误)
+    * fatal		(致命错误)
 * 输出介质	ilog_setoutput
 	* 文件
 	* stdout

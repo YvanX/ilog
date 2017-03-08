@@ -1,9 +1,15 @@
 ﻿#include <stdio.h>
 #include "ilog.h"
-#include <vld.h>
+
+static void ilog_init()
+{
+    ilogInit();
+    ilogSetStyleFormat(NULL, "%S:%L:%F\n%f");
+}
 
 int main(void)
 {
+    ilog_init();
     //char buf[31] = "\r\n中文字符串测试😂...";
 	char buf[31] = "\r\n中文字符串测试...";
  
