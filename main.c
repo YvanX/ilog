@@ -11,7 +11,7 @@ int main(void)
 {
     ilog_init();
     //char buf[31] = "\r\n中文字符串测试😂...";
-	char buf[31] = "\r\n中文字符串测试...";
+    char buf[31] = "\r\n中文字符串测试...";
  
     printf("testcase for log...\n");
     logDebug("this is a %s message", ilogLevelToString((LogLevel)1));
@@ -45,6 +45,6 @@ int main(void)
     hexLogIf(1, 5, buf, sizeof(buf), "this is a %s message for logIf", ilogLevelToString((LogLevel)5));
     hexLogIf(1, 6, buf, sizeof(buf), "this is a %s message for logIf", ilogLevelToString((LogLevel)6));
 
-	ilogCleanup();	
+    ilogCleanup();	
     return 0;
 }

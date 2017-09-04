@@ -1,10 +1,17 @@
-Ôªø/*
+/*
  * ilog - log function libary in c
  * auther : YvanX
+ * https://github.com/yvanx/ilog
  */
 
 #ifndef _ILOG_H_
 #define _ILOG_H_
+
+#ifdef ILOG_EXPORT
+#define ILOG_API __declspec(dllexport)
+#else
+#define ILOG_API
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,7 +24,7 @@ extern "C" {
 #   if _MSC_VER > 1200     // vc6.0
 #   define __func__ __FUNCTION__
 #  else
-#   define __func__ "<null>"	// ‰∏çÊîØÊåÅ__func__
+#   define __func__ "<null>"	// ≤ª÷ß≥÷__func__
 #  endif
 #endif
 
@@ -28,217 +35,226 @@ extern "C" {
 #define ILOG_ERROR_MEMORY       -1004
 #define ILOG_ERROR_NOTSUPPORT   -1005
 
-#define ILOG_INTERNAL_FORMAT	"--%3M-- %-7l **%S(%03L)**func:%-12F\n%f"	///< ÂÜÖÁΩÆÁöÑËæìÂá∫Ê†ºÂºè
+#define ILOG_INTERNAL_FORMAT	"-%3M- | %7l | *%t %20S(%04L)@%F\n%f"	///< ƒ⁄÷√µƒ ‰≥ˆ∏Ò Ω
 
-typedef enum {
-    LogLevelNull = 0,   ///< ‰∏çËæìÂá∫Êó•Âøó
-    LogLevelDebug,      ///< ÊúÄËØ¶ÁªÜÁöÑËæìÂá∫ÔºådebugÊó∂‰ΩøÁî®
-    LogLevelInfo,       ///< ÊôÆÈÄö‰ø°ÊÅØÁ≠âÁ∫ß
-    LogLevelNotice,     ///< ÈáçË¶ÅÁöÑ‰ø°ÊÅØ
-    LogLevelWarning,    ///< Ë≠¶Âëä‰ø°ÊÅØ
-    LogLevelError,      ///< ÈîôËØØ‰ø°ÊÅØ
-    LogLevelFatal       ///< Ëá¥ÂëΩÈîôËØØ
-} LogLevel;
+    typedef enum {
+        LogLevelNull = 0,   ///< ≤ª ‰≥ˆ»’÷æ
+        LogLevelDebug,      ///< ◊ÓœÍœ∏µƒ ‰≥ˆ£¨debug ± π”√
+        LogLevelInfo,       ///< ∆’Õ®–≈œ¢µ»º∂
+        LogLevelNotice,     ///< ÷ÿ“™µƒ–≈œ¢
+        LogLevelWarning,    ///< æØ∏Ê–≈œ¢
+        LogLevelError,      ///< ¥ÌŒÛ–≈œ¢
+        LogLevelFatal       ///< ÷¬√¸¥ÌŒÛ
+    } LogLevel;
 
-typedef enum {
-    LogTypeNull = 0,    ///< ‰∏çËæìÂá∫Êó•Âøó
-    LogTypeFile,        ///< ËæìÂá∫Âà∞Êñá‰ª∂
-    LogTypeStdout,      ///< ËæìÂá∫Âà∞stdout
-    LogTypeStderr,      ///< ËæìÂá∫Âà∞stderr
-    LogTypeSyslog,      ///< ËæìÂá∫Âà∞Á≥ªÁªüÊó•ÂøóÔºàsyslog/Event Log)
-    LogTypeCallback     ///< Áî®Êà∑Ëá™ÂÆö‰πâËæìÂá∫‰ªãË¥®
-} LogType;
+    typedef enum {
+        LogTypeNull = 0,    ///< ≤ª ‰≥ˆ»’÷æ
+        LogTypeFile,        ///<  ‰≥ˆµΩŒƒº˛
+        LogTypeStdout,      ///<  ‰≥ˆµΩstdout
+        LogTypeStderr,      ///<  ‰≥ˆµΩstderr
+        LogTypeSyslog,      ///<  ‰≥ˆµΩœµÕ≥»’÷æ£®syslog/Event Log)
+        LogTypeCallback     ///< ”√ªß◊‘∂®“Â ‰≥ˆΩÈ÷ 
+    } LogType;
 
-typedef enum {
-    LogStyleFormat,     ///< ‰ΩøÁî®Ê†ºÂºèÂåñÂ≠óÁ¨¶‰∏≤
-    LogStyleCallback    ///< Áî®Êà∑Ëá™ÂÆö‰πâËæìÂá∫ÊñπÂºè
-} LogStyle;
+    typedef enum {
+        LogStyleFormat,     ///<  π”√∏Ò ΩªØ◊÷∑˚¥Æ
+        LogStyleCallback    ///< ”√ªß◊‘∂®“Â ‰≥ˆ∑Ω Ω
+    } LogStyle;
 
-typedef enum {
-    LogOptBufSize,      ///< ËÆæÁΩÆËæìÂá∫bufÁöÑÂ§ßÂ∞è
-	LogOptOverWrite,    ///< ‰ªÖÂØπËæìÂá∫Âà∞Êñá‰ª∂ÊúâÊïàÔºåÊòØÂê¶Ë¶ÜÁõñÊó•ÂøóÊñá‰ª∂
-	LogOptInternalLog,  ///< ÊòØÂê¶ÂÖÅËÆ∏ËæìÂá∫ÂÜÖÈÉ®‰ø°ÊÅØÔºàÊèêÈÜíÊàñËÄÖË≠¶ÂëäÔºâ
-    LogOptRotateBySize, ///< ÊåâÊó•ÂøóÂ§ßÂ∞èËøõË°åÊó•ÂøóËΩ¨Ê°£
-    LogOptRotateByDay,  ///< Êó•ÂøóÊØèÂ§©ËΩ¨Ê°£
-    LogOptRotateByHour  ///< Êó•ÂøóÊØèÂ∞èÊó∂ËΩ¨Ê°£
-} LogOpt;
+    typedef enum {
+        LogOptSocket,		///<  ‰≥ˆ»’÷æµΩsocket£¨  ”√”⁄∂ØÃ¨ø‚º‰π≤œÌœ‡Õ¨µƒ ‰≥ˆ∑Ω Ω£¨±»»Á ‰≥ˆµΩÕ¨“ªŒƒº˛
+        LogOptBufSize,      ///< …Ë÷√ ‰≥ˆbufµƒ¥Û–°
+        LogOptOverWrite,    ///< Ωˆ∂‘ ‰≥ˆµΩŒƒº˛”––ß£¨ «∑Ò∏≤∏«»’÷æŒƒº˛
+        LogOptInternalLog,  ///<  «∑Ò‘ –Ì ‰≥ˆƒ⁄≤ø–≈œ¢£®Ã·–—ªÚ’ﬂæØ∏Ê£©
+        LogOptRotateBySize, ///< ∞¥»’÷æ¥Û–°Ω¯––»’÷æ◊™µµ
+        LogOptRotateByDay,  ///< »’÷æ√øÃÏ◊™µµ
+        LogOptRotateByHour, ///< »’÷æ√ø–° ±◊™µµ
+        LogOptRotateByTime  ///< ∂‡…Ÿ∑÷÷”∫Û◊™µµ
+    } LogOpt;
 
-typedef struct {
-    uint16_t year;
-	uint8_t  mon;
-	uint8_t  day;
-    uint8_t  hour;
-    uint8_t  min;
-    uint8_t  sec;
-    uint32_t usec;           // microsecond
-} LogTime;
+    typedef struct {
+        uint16_t year;
+        uint8_t  mon;
+        uint8_t  day;
+        uint8_t  hour;
+        uint8_t  min;
+        uint8_t  sec;
+        uint32_t usec;           // microsecond
+    } LogTime;
 
-typedef struct {
-    const char*	file;
-    const char*	func;
-    int			line;
-} LogSource;
+    typedef struct {
+        const char*	file;
+        const char*	func;
+        int			line;
+    } LogSource;
 
-typedef struct _tag_ilog ilog;
+    typedef struct _tag_ilog ilog;
 
-/**
- * Áî®Êà∑Ëá™ÂÆö‰πâËæìÂá∫ÂõûË∞ÉÂáΩÊï∞.
- * @param ctx: ‰º†ÈÄíÁªôÂõûË∞ÉÂáΩÊï∞ÁöÑÂèÇÊï∞
- * @param level: Êó•ÂøóÁ≠âÁ∫ß
- * @param buf: ËæìÂá∫ÁöÑÂÜÖÂÆπ
- * @param buflen: bufÁöÑÂ§ßÂ∞è
- * @return ÂÆûÈôÖÂÜôÂÖ•ÁöÑÂ≠óËäÇÊï∞
- */
-typedef int (*LogOutputFunc)(void *ctx, LogLevel level, char *buf, int buflen);
+    /**
+     * ”√ªß◊‘∂®“Â ‰≥ˆªÿµ˜∫Ø ˝.
+     * @param ctx: ¥´µ›∏¯ªÿµ˜∫Ø ˝µƒ≤Œ ˝
+     * @param level: »’÷æµ»º∂
+     * @param buf:  ‰≥ˆµƒƒ⁄»›
+     * @param buflen: bufµƒ¥Û–°
+     * @return  µº –¥»Îµƒ◊÷Ω⁄ ˝
+     */
+    typedef int (*LogOutputFunc)(void *ctx, LogLevel level, char *buf, int buflen);
 
-/**
- * Áî®Êà∑Ëá™ÂÆö‰πâÊ†ºÂºèÂåñËæìÂá∫.
- * @param ctx: ‰º†ÈÄíÁªôÂõûË∞ÉÂáΩÊï∞ÁöÑÂèÇÊï∞
- * @param buf: ËæìÂá∫Â≠óÁ¨¶‰∏≤Âà∞buf
- * @param buflen: bufÁöÑÂ§ßÂ∞è
- * @return Ê†ºÂºèÂåñÂêéÁöÑÂ≠óÁ¨¶‰∏≤ÈïøÂ∫¶
- */
-typedef int (*LogStyleFunc)(void *ctx,
-                            char *buf, int buflen,
-                            LogLevel loglvl,
-                            LogTime logtime,
-                            LogSource logsrc,
-                            unsigned long pid,
-                            unsigned long tid,
-                            const char *tag,
-                            const char *text
-                            );
+    /**
+    * ”√ªß◊‘∂®“Â∏Ò ΩªØ ‰≥ˆ.
+    * @param ctx: ¥´µ›∏¯ªÿµ˜∫Ø ˝µƒ≤Œ ˝
+    * @param buf:  ‰≥ˆ◊÷∑˚¥ÆµΩbuf
+    * @param buflen: bufµƒ¥Û–°
+    * @return ∏Ò ΩªØ∫Ûµƒ◊÷∑˚¥Æ≥§∂»
+    */
+    typedef int(*LogStyleFunc)(void *ctx,
+                               char *buf, int buflen,
+                               LogLevel loglvl,
+                               LogTime logtime,
+                               LogSource logsrc,
+                               unsigned long pid,
+                               unsigned long tid,
+                               const char *tag,
+                               const char *text
+                               );
 
-/**
- * ÂàùÂßãÂåñÂÖ®Â±ÄÂØπË±°.
- * ÂèØ‰ª•‰∏ç‰∏ªÂä®Ë∞ÉÁî®Ôºå‰ΩøÁî®ÂÖ∂ÂÆÉÂáΩÊï∞Êó∂ÔºåÂ¶ÇÊûúÊú™ÂàùÂßãÂåñÔºå‰ºöËá™Âä®Ë∞ÉÁî®„ÄÇ
- */
-int ilogInit();
+    /**
+     * ≥ı ºªØ»´æ÷∂‘œÛ.
+     * ø…“‘≤ª÷˜∂Øµ˜”√£¨ π”√∆‰À¸∫Ø ˝ ±£¨»Áπ˚Œ¥≥ı ºªØ£¨ª·◊‘∂Øµ˜”√°£
+     */
+    ILOG_API int ilogInit();
 
-/**
- * ÈáäÊîæÂÖ®Â±ÄÂØπË±°ÔºåÂ∫îÂú®Á®ãÂ∫èÁªìÊùüÊó∂Ë∞ÉÁî®
- */
-int ilogCleanup();
+    /**
+     *  Õ∑≈»´æ÷∂‘œÛ£¨”¶‘⁄≥Ã–ÚΩ· ¯ ±µ˜”√
+     */
+    ILOG_API int ilogCleanup();
 
-/**
- * Ê∑ªÂä†Êó•ÂøóÂè•ÊüÑÂà∞ÂÖ®Â±ÄÂØπË±°.
- * ‰∏Ä‰∏™Âè•ÊüÑÂè™ËÉΩÊ∑ªÂä†‰∏ÄÊ¨°ÔºåÂ§öÊ¨°Ê∑ªÂä†‰ºöÂøΩÁï•
- * Â¶ÇÊûúÊòØËæìÂá∫Âà∞Êñá‰ª∂ÔºåÊñá‰ª∂Ê≠§Êó∂‰ºöÂàõÂª∫ÔºåËØ∑Âú®Ë∞ÉÁî®Ê≠§ÂáΩÊï∞ÂâçËÆæÁΩÆÊòØÂê¶Ë¶ÜÁõñÂéüÊó•ÂøóÊñá‰ª∂
- * Â¶ÇÊûúÊú™ÊåáÂÆöÊ†ºÂºèÂåñËæìÂá∫ÊñπÂºèÔºåÂàô‰ΩøÁî®ÂÜÖÁΩÆÁöÑÊ†ºÂºè
- * ‰∏çÊèê‰æõÈÅçÂéÜÂ∑≤Ê∑ªÂä†ÁöÑÂè•ÊüÑÁöÑÂäüËÉΩÔºåÁî®Êà∑Â∫îËØ•Âú®‰∏Ä‰∏™ÂáΩÊï∞ÂÜÖÂÆåÊàêÊó•ÂøóÂàùÂßãÂåñÂ∑•‰ΩúÔºåÂõ†Ê≠§‰∏çÈúÄË¶ÅÈÅçÂéÜ
- * ‰∏çÊèê‰æõÂà†Èô§Â∑≤Ê∑ªÂä†ÁöÑÂè•ÊüÑÁöÑÂäüËÉΩÔºåÂ¶ÇÊûúÈúÄË¶ÅÔºåÂèØ‰ª•Ë∞ÉÁî® ilogDestroy()
- * @see ilogDestroy(ilog *log)
- * @see ILOG_INTERNAL_FORMAT
- * @return ÊàêÂäüÊó∂ËøîÂõû0ÔºåÂê¶ÂàôËøîÂõûÈùû0ÂÄº
- */
-int ilogAddLog(ilog *log);
+    /**
+     * ÃÌº”»’÷ææ‰±˙µΩ»´æ÷∂‘œÛ.
+     * “ª∏ˆæ‰±˙÷ªƒ‹ÃÌº”“ª¥Œ£¨∂‡¥ŒÃÌº”ª·∫ˆ¬‘
+     * »Áπ˚ « ‰≥ˆµΩŒƒº˛£¨Œƒº˛¥À ±ª·¥¥Ω®£¨«Î‘⁄µ˜”√¥À∫Ø ˝«∞…Ë÷√ «∑Ò∏≤∏«‘≠»’÷æŒƒº˛
+     * »Áπ˚Œ¥÷∏∂®∏Ò ΩªØ ‰≥ˆ∑Ω Ω£¨‘Ú π”√ƒ⁄÷√µƒ∏Ò Ω
+     * ≤ªÃ·π©±È¿˙“—ÃÌº”µƒæ‰±˙µƒπ¶ƒ‹£¨”√ªß”¶∏√‘⁄“ª∏ˆ∫Ø ˝ƒ⁄ÕÍ≥…»’÷æ≥ı ºªØπ§◊˜£¨“Ú¥À≤ª–Ë“™±È¿˙
+     * ≤ªÃ·π©…æ≥˝“—ÃÌº”µƒæ‰±˙µƒπ¶ƒ‹£¨»Áπ˚–Ë“™£¨ø…“‘µ˜”√ ilogDestroy()
+     * @see ilogDestroy(ilog *log)
+     * @see ILOG_INTERNAL_FORMAT
+     * @return ≥…π¶ ±∑µªÿ0£¨∑Ò‘Ú∑µªÿ∑«0÷µ
+     */
+    ILOG_API int ilogAddLog(ilog *log);
 
-/**
- * ÂàõÂª∫‰∏Ä‰∏™Êó•ÂøóÂè•ÊüÑ.
- * Ê†πÊçÆLogTypeÊù•ÂÜ≥ÂÆöÂèØÂèòÂèÇÊï∞ÁöÑ‰ΩúÁî®
- * ËæìÂá∫Âà∞Êñá‰ª∂Êó∂ÔºåËøΩÂä†‰∏Ä‰∏™Â≠óÁ¨¶‰∏≤ÂèÇÊï∞ÔºåË°®Á§∫Êñá‰ª∂Âêç
- * ËæìÂá∫Âà∞syslogÊó∂ÔºåËøΩÂä†‰∏Ä‰∏™Â≠óÁ¨¶‰∏≤ÂèÇÊï∞ÔºåË°®Á§∫ident
- * ËæìÂá∫Âà∞Ëá™ÂÆö‰πâÂõûË∞ÉÂáΩÊï∞Êó∂ÔºåËøΩÂä†‰∏§‰∏™ÂèÇÊï∞ÔºåÁ¨¨‰∏Ä‰∏™ÊòØLogOutputFuncÔºåÁ¨¨‰∫å‰∏™ÊòØ‰º†ÈÄíÁªôÂõûË∞ÉÂáΩÊï∞ÁöÑÂèÇÊï∞
- * ÂÖ∂ÂÆÉÊÉÖÂÜµ‰∏çÈúÄË¶ÅÈ¢ùÂ§ñÁöÑÂèÇÊï∞
- */
-ilog* ilogCreate(LogLevel level, LogType type, ...);
+    /**
+     * ¥¥Ω®“ª∏ˆ»’÷ææ‰±˙.
+     * ∏˘æ›LogType¿¥æˆ∂®ø…±‰≤Œ ˝µƒ◊˜”√
+     *  ‰≥ˆµΩŒƒº˛ ±£¨◊∑º”“ª∏ˆ◊÷∑˚¥Æ≤Œ ˝£¨±Ì æŒƒº˛√˚
+     *  ‰≥ˆµΩsyslog ±£¨◊∑º”“ª∏ˆ◊÷∑˚¥Æ≤Œ ˝£¨±Ì æident
+     *  ‰≥ˆµΩ◊‘∂®“Âªÿµ˜∫Ø ˝ ±£¨◊∑º”¡Ω∏ˆ≤Œ ˝£¨µ⁄“ª∏ˆ «LogOutputFunc£¨µ⁄∂˛∏ˆ «¥´µ›∏¯ªÿµ˜∫Ø ˝µƒ≤Œ ˝
+     * ∆‰À¸«Èøˆ≤ª–Ë“™∂ÓÕ‚µƒ≤Œ ˝
+     */
+    ILOG_API ilog* ilogCreate(LogLevel level, LogType type, ...);
 
-/**
- * ÈáäÊîæ‰∏Ä‰∏™Êó•ÂøóÂè•ÊüÑ.
- * @note ÈáäÊîæÁöÑÊó∂ÂÄôÔºå‰πü‰ºö‰ªéÂÖ®Â±ÄÂØπË±°‰∏≠ÁßªÈô§Ê≠§Âè•ÊüÑ
- */
-void ilogDestroy(ilog *log);
+    /**
+     *  Õ∑≈“ª∏ˆ»’÷ææ‰±˙.
+     * @note  Õ∑≈µƒ ±∫Ú£¨“≤ª·¥”»´æ÷∂‘œÛ÷–“∆≥˝¥Àæ‰±˙
+     */
+    ILOG_API void ilogDestroy(ilog *log);
 
-/**
- * ËÆæÁΩÆÊó•ÂøóËæìÂá∫Á∫ßÂà´ÔºåÂ§ß‰∫éÁ≠â‰∫éÊ≠§Á∫ßÂà´ÁöÑÊó•ÂøóÊâç‰ºöËæìÂá∫.
- * logÂèØ‰ª•‰∏∫Á©∫ÔºåÊ≠§Êó∂ÂØπÂÜÖÁΩÆÁöÑÊó•ÂøóÂè•ÊüÑËøõË°åËÆæÁΩÆ
- */
-int ilogSetLevel(ilog *log, LogLevel level);
+    /**
+     * …Ë÷√»’÷æ ‰≥ˆº∂±£¨¥Û”⁄µ»”⁄¥Àº∂±µƒ»’÷æ≤≈ª· ‰≥ˆ.
+     * logø…“‘Œ™ø’£¨¥À ±∂‘ƒ⁄÷√µƒ»’÷ææ‰±˙Ω¯––…Ë÷√
+     */
+    ILOG_API int ilogSetLevel(ilog *log, LogLevel level);
 
-/**
- * ËÆæÁΩÆÊó•ÂøóÁöÑËæìÂá∫ÊñπÂºè.
- * logÂèØ‰ª•‰∏∫Á©∫ÔºåÊ≠§Êó∂ÂØπÂÜÖÁΩÆÁöÑÊó•ÂøóÂè•ÊüÑËøõË°åËÆæÁΩÆ
- * Â¶ÇÊûúÊòØÂ∞ÜÂÜÖÁΩÆÁöÑÂè•ÊüÑËÆæÁΩÆ‰∏∫ËæìÂá∫Âà∞Êñá‰ª∂ÔºåÂ∞ÜÂú®Ê≠§Êó∂ÂàõÂª∫Êñá‰ª∂
- * @see ilogCreate()
- */
-int ilogSetOutputType(ilog *log, LogType type, ...);
+    /**
+     * …Ë÷√»’÷æµƒ ‰≥ˆ∑Ω Ω.
+     * logø…“‘Œ™ø’£¨¥À ±∂‘ƒ⁄÷√µƒ»’÷ææ‰±˙Ω¯––…Ë÷√
+     * »Áπ˚ «Ω´ƒ⁄÷√µƒæ‰±˙…Ë÷√Œ™ ‰≥ˆµΩŒƒº˛£¨Ω´‘⁄¥À ±¥¥Ω®Œƒº˛
+     * @see ilogCreate()
+     */
+    ILOG_API int ilogSetOutputType(ilog *log, LogType type, ...);
 
-/**
- * ‰∏Ä‰∫õÈ¢ùÂ§ñÁöÑËÆæÁΩÆ.
- * logÂèØ‰ª•‰∏∫Á©∫ÔºåÊ≠§Êó∂ÂØπÂÜÖÁΩÆÁöÑÊó•ÂøóÂè•ÊüÑËøõË°åËÆæÁΩÆ
- * ÈúÄË¶Å‰∏Ä‰∏™È¢ùÂ§ñÁöÑÂèÇÊï∞Ôºå1Ë°®Á§∫ÂºÄÂêØÔºå0Ë°®Á§∫ÂÖ≥Èó≠
- * Â¶ÇÊûúËÆæÁΩÆÊåâÂ§ßÂ∞èËΩ¨Ê°£ÔºåÈ¢ùÂ§ñÁöÑÂèÇÊï∞Ë°®Á§∫Êñá‰ª∂Â§ßÂ∞èÔºå0Ë°®Á§∫‰∏çËΩ¨Ê°£
- * @see LogOpt
- */
-int ilogSetOpt(ilog *log, LogOpt opt, ...);
+    /**
+     * “ª–©∂ÓÕ‚µƒ…Ë÷√.
+     * logø…“‘Œ™ø’£¨¥À ±∂‘ƒ⁄÷√µƒ»’÷ææ‰±˙Ω¯––…Ë÷√
+     * –Ë“™“ª∏ˆ∂ÓÕ‚µƒ≤Œ ˝£¨1±Ì æø™∆Ù£¨0±Ì æπÿ±’
+     * »Áπ˚…Ë÷√∞¥¥Û–°◊™µµ£¨∂ÓÕ‚µƒ≤Œ ˝±Ì æŒƒº˛¥Û–°£¨0±Ì æ≤ª◊™µµ
+     * @see LogOpt
+     */
+    ILOG_API int ilogSetOpt(ilog *log, LogOpt opt, ...);
 
-/**
- * ËÆæÁΩÆÊ≠§Êó•ÂøóÂè•ÊüÑÁöÑtag.
- * logÂèØ‰ª•‰∏∫Á©∫ÔºåÊ≠§Êó∂ÂØπÂÜÖÁΩÆÁöÑÊó•ÂøóÂè•ÊüÑËøõË°åËÆæÁΩÆ
- */
-int ilogSetTag(ilog *log, const char *tag);
+    /**
+     * …Ë÷√¥À»’÷ææ‰±˙µƒtag.
+     * logø…“‘Œ™ø’£¨¥À ±∂‘ƒ⁄÷√µƒ»’÷ææ‰±˙Ω¯––…Ë÷√
+     */
+    ILOG_API int ilogSetTag(ilog *log, const char *tag);
 
-/**
- * ËÆæÁΩÆÊó•ÂøóÁöÑÊ†ºÂºèÂåñÊñπÂºè.
- * Ê†πÊçÆLogStyleÊù•ËøΩÂä†È¢ùÂ§ñÁöÑÂèÇÊï∞
- * @see ilogSetStyleFormat()
- * @see ilogSetStyleCallback()
- */
-int ilogSetStyle(ilog *log, LogStyle style, ...);
+    /**
+     * …Ë÷√»’÷æµƒ∏Ò ΩªØ∑Ω Ω.
+     * ∏˘æ›LogStyle¿¥◊∑º”∂ÓÕ‚µƒ≤Œ ˝
+     * @see ilogSetStyleFormat()
+     * @see ilogSetStyleCallback()
+     */
+    ILOG_API int ilogSetStyle(ilog *log, LogStyle style, ...);
 
-/**
- * ÊåâÁÖßÊ†ºÂºèÂåñÂ≠óÁ¨¶‰∏≤ÔºåÁî®Á±ª‰ºº‰∫éprintfÁöÑÊñπÂºèËøõË°åËæìÂá∫.
- * ËΩ¨‰πâÂ∫èÂàóÔºö
- * %[-][width]type
- * '-'Ë°®Á§∫Â∑¶ÂØπÈΩêÔºåÂê¶ÂàôÂè≥ÂØπÈΩê
- * widthË°®Á§∫ËæìÂá∫ÂÆΩÂ∫¶ÔºåËæìÂá∫ÁöÑÂÜÖÂÆπÂ§ß‰∫éwidthÊó∂ÔºåÊó†ËßÜwidth
- * type:
- * % '%'Âè∑Êú¨Ë∫´
- * d Êó•Êúü YYYY-MM-DD
- * D Êó•ÊúüÊó∂Èó¥ YYYY-MM-DD HH:mm:ss
- * M Êó•Êúü+Á≤æÁ°ÆÊó∂Èó¥Ôºàwin32‰∏ãÁ≤æÁ°ÆÂà∞ÊØ´ÁßíÔºåunix‰∏ãÁ≤æÁ°ÆÂà∞ÂæÆÁßí),ÂÆΩÂ∫¶ÊéßÂà∂ËåÉÂõ¥‰∏∫0-6ÔºåË°®Á§∫Á≤æÁ°ÆÂà∞Â∞èÊï∞ÁÇπÂêéÂá†‰Ωç
- * l Êó•ÂøóÁ≠âÁ∫ß
- * S Ê∫êÁ†ÅÊñá‰ª∂Âêç
- * L ÊâÄÂú®Ë°åÊï∞
- * F ÊâÄÂú®ÂáΩÊï∞
- * p pid
- * t tid
- * u Áî®Êà∑Ëá™ÂÆö‰πâtag
- * f Êó•ÂøóÊ≠£Êñá
- * logÂèØ‰ª•‰∏∫Á©∫ÔºåÊ≠§Êó∂ÂØπÂÜÖÁΩÆÁöÑÊó•ÂøóÂè•ÊüÑËøõË°åËÆæÁΩÆ
- * @see ILOG_INTERNAL_FORMAT
- */
-int ilogSetStyleFormat(ilog *log, const char *format);
+    /**
+     * ∞¥’’∏Ò ΩªØ◊÷∑˚¥Æ£¨”√¿‡À∆”⁄printfµƒ∑Ω ΩΩ¯–– ‰≥ˆ.
+     * ◊™“Â–Ú¡–£∫
+     * %[-][width]type
+     * '-'±Ì æ◊Û∂‘∆Î£¨∑Ò‘Ú”“∂‘∆Î
+     * width±Ì æ ‰≥ˆøÌ∂»£¨ ‰≥ˆµƒƒ⁄»›¥Û”⁄width ±£¨Œﬁ ”width
+     * type:
+     * % '%'∫≈±æ…Ì
+     * d »’∆⁄ YYYY-MM-DD
+     * D »’∆⁄ ±º‰ YYYY-MM-DD HH:mm:ss
+     * M »’∆⁄+æ´»∑ ±º‰£®win32œ¬æ´»∑µΩ∫¡√Î£¨unixœ¬æ´»∑µΩŒ¢√Î),øÌ∂»øÿ÷∆∑∂ŒßŒ™0-6£¨±Ì ææ´»∑µΩ–° ˝µ„∫Ûº∏Œª
+     * l »’÷æµ»º∂
+     * S ‘¥¬ÎŒƒº˛√˚
+     * L À˘‘⁄–– ˝
+     * F À˘‘⁄∫Ø ˝
+     * p pid
+     * t tid
+     * u ”√ªß◊‘∂®“Âtag
+     * f »’÷æ’˝Œƒ
+     * logø…“‘Œ™ø’£¨¥À ±∂‘ƒ⁄÷√µƒ»’÷ææ‰±˙Ω¯––…Ë÷√
+     * @see ILOG_INTERNAL_FORMAT
+     */
+    ILOG_API int ilogSetStyleFormat(ilog *log, const char *format);
 
-/**
- * ËÆæÁΩÆÊ†ºÂºèËæìÂá∫ÁöÑÂõûË∞ÉÂáΩÊï∞.
- * logÂèØ‰ª•‰∏∫Á©∫ÔºåÊ≠§Êó∂ÂØπÂÜÖÁΩÆÁöÑÊó•ÂøóÂè•ÊüÑËøõË°åËÆæÁΩÆ
- * @see LogStyleFunc
- */
-int ilogSetStyleCallback(ilog *log, LogStyleFunc func, void *ctx);
+    /**
+     * …Ë÷√∏Ò Ω ‰≥ˆµƒªÿµ˜∫Ø ˝.
+     * logø…“‘Œ™ø’£¨¥À ±∂‘ƒ⁄÷√µƒ»’÷ææ‰±˙Ω¯––…Ë÷√
+     * @see LogStyleFunc
+     */
+    ILOG_API int ilogSetStyleCallback(ilog *log, LogStyleFunc func, void *ctx);
 
-/**
- * ËæìÂá∫Êó•Âøó.
- */
-int ilogWriteLog(LogLevel level,
-				 const char *file, int line, const char *func,     // Ê∫ê‰ª£Á†ÅÁõ∏ÂÖ≥ÁöÑ‰ø°ÊÅØ
-				 const char *format, ...);
+    /**
+     *  ‰≥ˆ»’÷æ.
+     */
+    ILOG_API int ilogWriteLog(LogLevel level,
+            const char *file, int line, const char *func,     // ‘¥¥˙¬Îœ‡πÿµƒ–≈œ¢
+            const char *format, ...);
 
-/**
- * ËæìÂá∫Êó•ÂøóÔºåÂêåÊó∂ËøΩÂä†ËæìÂá∫bufÁöÑ‰ø°ÊÅØ.
- */
-int ilogWriteHex(LogLevel level,
-                 const char *file, int line, const char *func,  // Ê∫ê‰ª£Á†ÅÁõ∏ÂÖ≥ÁöÑ‰ø°ÊÅØ
-                 void *buf, int len,
-                 const char *format, ...);
+    /**
+     *  ‰≥ˆ»’÷æ£¨Õ¨ ±◊∑º” ‰≥ˆbufµƒ–≈œ¢.
+     */
+    ILOG_API int ilogWriteHex(LogLevel level,
+            const char *file, int line, const char *func,  // ‘¥¥˙¬Îœ‡πÿµƒ–≈œ¢
+            void *buf, int len,
+            const char *format, ...);
 
-/**
- * ËøîÂõûÊó•ÂøóÁ≠âÁ∫ßÂØπÂ∫îÁöÑÂ≠óÁ¨¶‰∏≤.
- */
-const char* ilogLevelToString(LogLevel level);
+    /**
+     * ∑µªÿ»’÷æµ»º∂∂‘”¶µƒ◊÷∑˚¥Æ.
+     */
+    ILOG_API const char* ilogLevelToString(LogLevel level);
+
+    /**
+     * ¥¥Ω®socket∑˛ŒÒ∆˜£¨”√”⁄Ω” ’∏˜∂ØÃ¨ø‚∑¢¿¥µƒ»’÷æ
+     * @param port serverº‡Ã˝µƒ∂Àø⁄∫≈
+     * @return 0 success <0 error
+     */
+    ILOG_API int ilogCreateServer(unsigned short port);
 
 #define _log_internal(lvl, fmt, ...) \
-                                ilogWriteLog((LogLevel)(lvl), __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
+    ilogWriteLog((LogLevel)(lvl), __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
 #define logDebug(fmt, ...)  _log_internal(LogLevelNull + 1, fmt, ##__VA_ARGS__)
 #define logInfo(fmt, ...)   _log_internal(LogLevelNull + 2, fmt, ##__VA_ARGS__)
 #define logNotice(fmt, ...) _log_internal(LogLevelNull + 3, fmt, ##__VA_ARGS__)
@@ -247,7 +263,7 @@ const char* ilogLevelToString(LogLevel level);
 #define logFatal(fmt, ...)  _log_internal(LogLevelNull + 6, fmt, ##__VA_ARGS__)
 
 #define _hexlog_internal(lvl, buf, len, fmt, ...) \
-                                ilogWriteHex((LogLevel)(lvl), __FILE__, __LINE__, __func__, buf, len, fmt, ##__VA_ARGS__)
+    ilogWriteHex((LogLevel)(lvl), __FILE__, __LINE__, __func__, buf, len, fmt, ##__VA_ARGS__)
 #define hexLogDebug(buf, len, fmt, ...)     _hexlog_internal(LogLevelNull + 1, buf, len, fmt, ##__VA_ARGS__)
 #define hexLogInfo(buf, len, fmt, ...)      _hexlog_internal(LogLevelNull + 2, buf, len, fmt, ##__VA_ARGS__)
 #define hexLogNotice(buf, len, fmt, ...)    _hexlog_internal(LogLevelNull + 3, buf, len, fmt, ##__VA_ARGS__)
@@ -258,12 +274,12 @@ const char* ilogLevelToString(LogLevel level);
 #define logIf(expr, level, fmt, ...) \
     do { \
         if(expr)\
-			_log_internal(level, fmt, ##__VA_ARGS__); \
+        _log_internal(level, fmt, ##__VA_ARGS__); \
     } while(0);
 #define hexLogIf(expr, level, buf, len, fmt, ...) \
     do { \
         if(expr)\
-			_hexlog_internal(level, buf, len, fmt, ##__VA_ARGS__); \
+        _hexlog_internal(level, buf, len, fmt, ##__VA_ARGS__); \
     } while(0);
 
 #ifdef __cplusplus
