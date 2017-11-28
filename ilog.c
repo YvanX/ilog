@@ -1014,7 +1014,6 @@ ILOG_API int ilogSetStyleFormat(ilog *log, const char *format)
         log = ilogMgr->internalLog;
     }
     log->styleFunc = NULL;
-    log->ctx = NULL;
     if(log->formatList) {
         releaseFormat(log->formatList);
     }
